@@ -15,7 +15,7 @@ ALLOWED_ORIGINS = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "*").split(",
 RATE_LIMIT_PER_MIN = int(os.getenv("RATE_LIMIT_PER_MIN", "120"))
 
 APP_NAME = "jarvik-model-gateway"
-APP_VERSION = "1.0.0-local"
+APP_VERSION = "1.0.0-lan"
 
 # ===== App & CORS =====
 app = FastAPI(title=APP_NAME, version=APP_VERSION)
@@ -46,7 +46,6 @@ def _check_rl(api_key: str, ip: str):
 # ===== Auth „kurvítko“ =====
 def _auth_check(auth_header: Optional[str]) -> str:
     if not API_KEYS:
-        # Lokální režim vyžaduje klíč – bez něj fail
         raise HTTPException(status_code=500, detail="Server misconfigured: API_KEYS empty")
     if not auth_header or not auth_header.lower().startswith("bearer "):
         raise HTTPException(status_code=401, detail="Missing Bearer token")
@@ -62,22 +61,12 @@ client = httpx.AsyncClient(timeout=httpx.Timeout(300.0, connect=10.0), follow_re
 def _map_openai_to_ollama_chat(payload: Dict[str, Any]) -> Dict[str, Any]:
     model = payload.get("model", "")
     messages = payload.get("messages", [])
-    ollama_req = {
-        "model": model,
-        "messages": messages,
-        "stream": payload.get("stream", False),
-        "options": {}
-    }
-    # volitelné parametry
-    if (t := payload.get("temperature")) is not None:
-        ollama_req["options"]["temperature"] = float(t)
-    if (p := payload.get("top_p")) is not None:
-        ollama_req["options"]["top_p"] = float(p)
-    if (mt := payload.get("max_tokens")) is not None:
-        ollama_req["options"]["num_predict"] = int(mt)
-    if (stop := payload.get("stop")) is not None:
-        ollama_req["options"]["stop"] = stop
-    return ollama_req
+    req = {"model": model, "messages": messages, "stream": bool(payload.get("stream", False)), "options": {}}
+    if (t := payload.get("temperature")) is not None: req["options"]["temperature"] = float(t)
+    if (p := payload.get("top_p")) is not None: req["options"]["top_p"] = float(p)
+    if (mt := payload.get("max_tokens")) is not None: req["options"]["num_predict"] = int(mt)
+    if (stop := payload.get("stop")) is not None: req["options"]["stop"] = stop
+    return req
 
 def _openai_chunk(model: str, delta_content: Optional[str], finish_reason: Optional[str]) -> Dict[str, Any]:
     return {
@@ -189,9 +178,9 @@ async def embeddings(request: Request, authorization: Optional[str] = Header(Non
 
 @app.get("/")
 async def root():
-    return {"service": APP_NAME, "version": APP_VERSION, "mode": "LOCAL_ONLY", "endpoints": ["/healthz", "/v1/models", "/v1/chat/completions", "/v1/embeddings"]}
+    return {"service": APP_NAME, "version": APP_VERSION, "mode": "LAN", "endpoints": ["/healthz", "/v1/models", "/v1/chat/completions", "/v1/embeddings"]}
 
 if __name__ == "__main__":
-    # *** DŮLEŽITÉ: Běží POUZE na 127.0.0.1 ***
+    # *** LAN režim: naslouchá na všech rozhraních ***
     import uvicorn
-    uvicorn.run("app:app", host="127.0.0.1", port=8095, reload=False)
+    uvicorn.run("app:app", host="0.0.0.0", port=8095, reload=False)
