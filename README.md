@@ -42,13 +42,19 @@ docker images
 ```
 
 Expected list:
-- at-code:latest
-- chat-qwen:latest
-- smollm:1.7b
-- codegemma:2b
-- qwen3:1.7b
-- codegemma2b-tuned:latest
-- stable-code:3b
+- everythinglm:13b-16k
+- jarvik-chat:latest
+- jarvik-coder:latest
+- jarvik-rag:latest
+- CognitiveComputations/dolphin-llama3.1:8b
+- dolphincoder:15b-starcoder2-q5_K_M
+- gpt-oss:latest
+- starcoder:7b
+- mistral:7b
+- codellama:7b-instruct
+- nous-hermes2:latest
+- command-r:latest
+- llama3:8b
 
 2. Start a container for a model:
 
@@ -59,13 +65,19 @@ docker run -it --rm --gpus all -p HOST_PORT:8000 IMAGE_NAME
 ### Example commands
 
 ```bash
-docker run -it --rm --gpus all -p 8000:8000 at-code:latest
-docker run -it --rm --gpus all -p 8001:8000 chat-qwen:latest
-docker run -it --rm --gpus all -p 8002:8000 smollm:1.7b
-docker run -it --rm --gpus all -p 8003:8000 codegemma:2b
-docker run -it --rm --gpus all -p 8004:8000 qwen3:1.7b
-docker run -it --rm --gpus all -p 8005:8000 codegemma2b-tuned:latest
-docker run -it --rm --gpus all -p 8006:8000 stable-code:3b
+docker run -it --rm --gpus all -p 8000:8000 everythinglm:13b-16k
+docker run -it --rm --gpus all -p 8001:8000 jarvik-chat:latest
+docker run -it --rm --gpus all -p 8002:8000 jarvik-coder:latest
+docker run -it --rm --gpus all -p 8003:8000 jarvik-rag:latest
+docker run -it --rm --gpus all -p 8004:8000 CognitiveComputations/dolphin-llama3.1:8b
+docker run -it --rm --gpus all -p 8005:8000 dolphincoder:15b-starcoder2-q5_K_M
+docker run -it --rm --gpus all -p 8006:8000 gpt-oss:latest
+docker run -it --rm --gpus all -p 8007:8000 starcoder:7b
+docker run -it --rm --gpus all -p 8008:8000 mistral:7b
+docker run -it --rm --gpus all -p 8009:8000 codellama:7b-instruct
+docker run -it --rm --gpus all -p 8010:8000 nous-hermes2:latest
+docker run -it --rm --gpus all -p 8011:8000 command-r:latest
+docker run -it --rm --gpus all -p 8012:8000 llama3:8b
 ```
 
 3. Test a running model:
