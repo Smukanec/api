@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import os, time, json, uuid
+import os, time, json, uuid, datetime
 from typing import Optional, Dict, Any, List, Literal, Union, Tuple
 from collections import defaultdict, deque
 
@@ -118,6 +118,30 @@ def _openai_final(model: str, text: str) -> Dict[str, Any]:
         "usage": {"prompt_tokens": None, "completion_tokens": None, "total_tokens": None}
     }
 
+# ===== Pomocné funkce =====
+def _human_size(num: int) -> str:
+    units = ["B", "KB", "MB", "GB", "TB"]
+    for unit in units:
+        if num < 1024 or unit == units[-1]:
+            return f"{num:.1f} {unit}"
+        num /= 1024
+    return f"{num:.1f} PB"
+
+def _human_modified(timestr: str) -> str:
+    try:
+        dt = datetime.datetime.fromisoformat(timestr.replace("Z", "+00:00"))
+    except Exception:
+        return timestr
+    diff = datetime.datetime.now(datetime.timezone.utc) - dt
+    secs = diff.total_seconds()
+    if secs < 60:
+        return "just now"
+    if secs < 3600:
+        return f"{int(secs // 60)} minutes ago"
+    if secs < 86400:
+        return f"{int(secs // 3600)} hours ago"
+    return f"{int(secs // 86400)} days ago"
+
 # ===== Pydantic modely =====
 class Message(BaseModel):
     role: Literal["system", "user", "assistant"]
@@ -160,7 +184,10 @@ class EmbeddingResponse(BaseModel):
     usage: Dict[str, Any]
 
 class ModelItem(BaseModel):
+    name: str
     id: str
+    size: Optional[str] = None
+    modified: Optional[str] = None
     object: Literal["model"] = "model"
 
 class ModelListResponse(BaseModel):
@@ -198,10 +225,21 @@ async def healthz(request: Request):
 @app.get("/v1/models", response_model=ModelListResponse)
 async def list_models(request: Request, api_key: str = Depends(verify_request)):
     data = await get_models_cached(request)
-    return ModelListResponse(
-        object="list",
-        data=[ModelItem(id=m.get("name", "")) for m in data]
-    )
+    items: List[ModelItem] = []
+    for m in data:
+        name = m.get("name", "")
+        digest = m.get("digest", "")
+        size = _human_size(int(m.get("size", 0)))
+        modified = _human_modified(m.get("modified", ""))
+        items.append(
+            ModelItem(
+                name=name,
+                id=digest.split(":")[-1][:12] if digest else "",
+                size=size,
+                modified=modified,
+            )
+        )
+    return ModelListResponse(object="list", data=items)
 
 # ===== Chat completions =====
 @app.post("/v1/chat/completions", response_model=ChatResponse)
