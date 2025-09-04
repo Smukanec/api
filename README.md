@@ -27,7 +27,7 @@ The service listens on port `8095` by default.
 ## Endpoints
 
 - `GET /healthz` – basic health check
-- `GET /v1/models` – list available models
+- `GET /v1/models` – list available models including `name`, `id`, `size` and `modified`
 - `POST /v1/chat/completions` – create chat completions (supports streaming)
 - `POST /v1/embeddings` – generate embeddings
 
