@@ -55,6 +55,7 @@ Expected list:
 - nous-hermes2:latest
 - command-r:latest
 - llama3:8b
+- embedding-gemma:2b
 
 2. Start a container for a model:
 
@@ -78,6 +79,7 @@ docker run -it --rm --gpus all -p 8009:8000 codellama:7b-instruct
 docker run -it --rm --gpus all -p 8010:8000 nous-hermes2:latest
 docker run -it --rm --gpus all -p 8011:8000 command-r:latest
 docker run -it --rm --gpus all -p 8012:8000 llama3:8b
+docker run -it --rm --gpus all -p 8013:8000 embedding-gemma:2b
 ```
 
 3. Test a running model:

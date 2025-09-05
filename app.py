@@ -285,9 +285,15 @@ async def chat_completions(req: ChatRequest, request: Request, api_key: str = De
 async def embeddings(req: EmbeddingRequest, request: Request, api_key: str = Depends(verify_request)):
     client: httpx.AsyncClient = request.app.state.client
     texts: List[str] = [str(t) for t in (req.input if isinstance(req.input, list) else [req.input])]
+    # allow simple aliases for embedding models
+    embedding_aliases = {
+        "embeddinggemma": "embedding-gemma",
+    }
+    model = embedding_aliases.get(req.model, req.model)
+
     results = []
     for t in texts:
-        r = await client.post(f"{OLLAMA_URL}/api/embeddings", json={"model": req.model, "prompt": t})
+        r = await client.post(f"{OLLAMA_URL}/api/embeddings", json={"model": model, "prompt": t})
         if r.status_code != 200:
             raise HTTPException(status_code=502, detail=f"Ollama embeddings error: {r.text}")
         emb = r.json().get("embedding", [])
